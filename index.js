@@ -1,4 +1,4 @@
-const canvas = document.getElementById('canvas');
+const canvas = document.querySelector('canvas');
 const c = canvas.getContext('2d')
 
 class Vertex{
@@ -111,11 +111,15 @@ class PlayerController{
         this.self = this
         this.player = player
         this.lMB = false
+        this.touch = false
         this.cursorPos = {x: innerWidth/2, y: innerHeight/2}
 
         window.addEventListener("mousedown", this.mouseDownHandler, false)
         window.addEventListener("mouseup", this.mouseUpHandler, false)
         window.addEventListener("mousemove", this.getCursorPosition, false)
+        window.addEventListener("touchstart", this.getCursorPosition, false)
+        window.addEventListener("touchend", this.touchDownHandler, false)
+        window.addEventListener("touchmove", this.touchUpHandler, false)
     }
 
     getCursorPosition(e) {
@@ -132,9 +136,15 @@ class PlayerController{
     mouseUpHandler(){
         self.lMB = false
     }
+    touchDownHandler(){
+        self.touch = true
+    }
+    touchDownHandler(){
+        self.touch = false
+    }
     followMouse(){
         
-        if(self.lMB==true){
+        if(self.lMB==true || self.touch==true){
             //chcemy żeby nasze wektory sumowały się do speed w kierunku wskaźnika
             const dx = this.player.pos.x - self.cursorPos.x
             const dy = this.player.pos.y - self.cursorPos.y

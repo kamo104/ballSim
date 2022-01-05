@@ -57,15 +57,29 @@ class Player {
         this.yr = this.pos.y/canvas.height
         this.drawPlayer(this.pos)
     }
+    applyFriction(){
+        const dx = this.vel.x
+        const dy = this.vel.y
+        const c = dx*dx + dy*dy
+        if(friction*friction>c){
+            this.vel = {x:0,y:0}
+        }
+        else if(dx!=0  || dy !=0){
+            const a = friction/Math.sqrt(c)
+            const fx = dx*a
+            const fy = dy*a
+
+            this.vel = {x:this.vel.x - fx,y:this.vel.y -fy}
+
+        }
+
+    }
     updatePos(){
         drawCircle(this.pos,this.radius+1,"white")
         this.pos = {x: this.pos.x +this.vel.x, y:this.pos.y -this.vel.y }
         this.xr = this.pos.x/canvas.width
         this.yr = this.pos.y/canvas.height
-        if(this.vel.x>0){this.vel.x -=friction;}
-        else if(this.vel.x<0){this.vel.x +=friction;}
-        if(this.vel.y>0){this.vel.y -=friction;}
-        else if(this.vel.y<0){this.vel.y +=friction;}
+        this.applyFriction()
         this.drawPlayer(this.pos)
         //console.log(this.pos)
     }
@@ -147,7 +161,7 @@ function followMouse(){
 fitCanvasToWindow()
 //create player pbject that interacts with onresize
 const friction = 0.5
-const speed = 5
+const speed = 2
 const maxSpeed = 10
 var startingPosVertex = new Vertex(innerWidth/2, innerHeight/2)
 const currentPlayer = new Player(startingPosVertex, 30, "blue", {x:0,y:0}, speed)

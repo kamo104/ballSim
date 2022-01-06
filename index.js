@@ -33,7 +33,7 @@ function drawCircle(pos,radius,color) {
 
 class Player {
 
-    constructor(pos,radius,color, vel, speed){
+    constructor(pos,radius,color, vel, speed, maxVel){
         this.pos = pos
         this.xr = pos.x/canvas.width
         this.yr = pos.y/canvas.height
@@ -41,6 +41,7 @@ class Player {
         this.color = color
         this.vel = vel
         this.speed = speed
+        this.maxVel = maxVel
     }
 
     drawPlayer(pos) {
@@ -72,8 +73,7 @@ class Player {
 
     }
     detectColission(){
-        
-        
+        //detecting collision with wall and moving the player to the opposite wall in case
         
         if(this.pos.x<0){
             drawCircle(this.pos,this.radius+1,"white")
@@ -139,7 +139,7 @@ class PlayerController{
     touchDownHandler(){
         self.touch = true
     }
-    touchDownHandler(){
+    touchUpHandler(){
         self.touch = false
     }
     followMouse(){
@@ -149,35 +149,62 @@ class PlayerController{
             const dx = this.player.pos.x - self.cursorPos.x
             const dy = this.player.pos.y - self.cursorPos.y
             const c = Math.sqrt(dx*dx + dy*dy)
-            const a = speed/c
+            const a = this.player.speed/c
             const newX =a*dx
             const newY =a*dy
+            
             this.player.vel = {x: this.player.vel.x - newX,y: this.player.vel.y + newY}
+            if(Math.hypot(this.player.vel.x,this.player.vel.y)>this.player.maxVel){
+                this.player.vel = {x: this.player.vel.x + newX,y: this.player.vel.y - newY}
+            }
         }
+    }
+    followPlayer(player1){
+        
+            //chcemy żeby nasze wektory sumowały się do speed w kierunku wskaźnika
+            const dx = this.player.pos.x - player1.pos.x
+            const dy = this.player.pos.y - player1.pos.y
+            const c = Math.sqrt(dx*dx + dy*dy)
+            const a = this.player.speed/c
+            const newX =a*dx
+            const newY =a*dy
+            
+            this.player.vel = {x: this.player.vel.x - newX,y: this.player.vel.y + newY}
+            //subtract new added speed if it went over max speed
+            if(Math.hypot(this.player.vel.x,this.player.vel.y)>this.player.maxVel){
+                this.player.vel = {x: this.player.vel.x + newX,y: this.player.vel.y - newY}
+            }
+        
     }
 }
 
 
 fitCanvasToWindow()
 //create player pbject that interacts with onresize
-const friction = 0.5 //pixels per frame
+const friction = 0 //force vector in the opposite direction
 const speed = 2 //can get x pixels per frame faster
-const maxVel = 10
+const maxVel = 25
 var startingPosVertex = new Vertex(innerWidth/2, innerHeight/2)
-const currentPlayer = new Player(startingPosVertex, 30, "blue", {x:0,y:0}, speed)
-const currentController = new PlayerController(currentPlayer);
+const currentPlayer0 = new Player(startingPosVertex, 30, "blue", {x:0,y:0}, speed, maxVel)
+const currentPlayer1 = new Player({x:innerWidth/2+300, y:innerHeight/2}, 30, "red", {x:10,y:10}, speed, maxVel)
+const currentController0 = new PlayerController(currentPlayer0);
+const currentController1 = new PlayerController(currentPlayer1);
 window.addEventListener("resize", onResize, false)
-currentController.player.drawPlayer(startingPosVertex)
+currentController0.player.drawPlayer(currentController0.player.pos)
+currentController1.player.drawPlayer(currentController1.player.pos)
 
 
 
 function animate(){
     requestAnimationFrame(animate)
 
-    currentController.player.updatePos()
-    currentController.player.detectColission()
-    currentController.followMouse()
-
+    currentController0.player.updatePos()
+    currentController1.player.updatePos()
+    currentController0.player.detectColission()
+    currentController1.player.detectColission()
+    currentController0.followMouse()
+    currentController0.followPlayer(currentController1.player)
+    currentController1.followPlayer(currentController0.player)
 }
 
 animate()

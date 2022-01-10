@@ -3,6 +3,39 @@
 
 <head>
     <style>
+    .accelerationContainer {
+        display: grid;
+        text-align: center;
+        grid-template-rows: auto, auto;
+        align-content:center;
+    }
+    .frictionContainer {
+        display: grid;
+        text-align: center;
+        grid-template-rows: auto, auto;
+        align-content:center;
+        }
+    .ballSpeedContainer {
+        display: grid;
+        text-align: center;
+        grid-template-rows: auto, auto;
+        align-content:center;
+    }
+    .wallCollision {
+        display: grid;
+        grid-template-rows: auto, auto;
+        text-align: center;
+        align-content:center;
+        }
+    .UIText {
+        text-align: center;
+        font-size: 20px;
+    }
+    .UIBar {
+        display: grid;
+        grid-template-columns: auto auto auto auto;
+        height: 100
+    }
     .game {
         position: relative;
         top: 34px
@@ -82,16 +115,44 @@
         }
     </style>
 
+    <div class="gamespace">
+        <div class="UIBar" id="UIBar" state="open" style="height: 100px; width: auto">
+            <div class="wallCollision" style="width:200px">
+                <label class="UItext">
+                    wallsCollision:
+                </label>
+                <div class="UIText">
+                    <label class="switch">
+                        <input type="checkbox" id="wallsCheckbox">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+            <div class="ballSpeedContainer" style="width:200px">
+                <label class="UItext">
+                    ballMaxSpeed:
+                </label>
+                <input type="range" min="0" max="50" value="50" id="ballSpeed">
+            </div>
 
-    <canvas id="canvas">
-        <script src="./index.js"></script>
-    </canvas>
-    <!--
-    <label class="switch">
-        <input type="checkbox">
-        <span class="slider"></span>
-    </label>
-    -->
+            <div class="frictionContainer" style="width:200px">
+                <label class="UItext">
+                    friction:
+                </label>
+                <input type="range" min="0" max="3" value="0.2" step="0.05" id="friction">
+            </div>
+
+            <div class="accelerationContainer" style="width:200px">
+                <label class="UItext">
+                    acceleration:
+                </label>
+                <input type="range" min="0" max="10" value="2" step="1" id="acceleration">
+            </div>
+        </div>
+        <canvas id="canvas">
+            <script src="./index.js"></script>
+        </canvas>
+    </div>
     
 </body>
 

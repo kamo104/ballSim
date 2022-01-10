@@ -1,6 +1,15 @@
-const canvas = document.querySelector('canvas');
-const c = canvas.getContext('2d')
+var canvas = document.querySelector('canvas');
+var c = canvas.getContext('2d')
 
+var ui = document.getElementById("UIBar")
+
+const walls = document.getElementById("wallsCheckbox")
+
+const speedSlider = document.getElementById("ballSpeed")
+
+const frictionSlider = document.getElementById("friction")
+
+const accelSlider = document.getElementById("acceleration")
 class Vertex{
     constructor(x,y){
         this.x = x
@@ -13,15 +22,25 @@ class Vector{
         this.y = y
     }
 }
-
+function refreshCanvas(){
+    c.fillStyle = "black"
+    c.fillRect(0,0,canvas.width,canvas.height)
+}
 function onResize(){
+
+    ui.style.height = window.innerHeight/10
+    ui.style.width = canvas.parentElement.clientWidth
     fitCanvasToWindow()
-    currentPlayer.movePlayerToLastRelativePos()
+
+
 }
 
 function fitCanvasToWindow(){
-    canvas.width = innerWidth
-    canvas.height = innerHeight
+    ui.style.height = window.innerHeight/10
+    ui.style.width = canvas.parentElement.clientWidth
+    canvas.width = canvas.parentElement.clientWidth
+    if(ui.hidden == false){canvas.height = window.innerHeight - parseFloat(ui.style.height)}
+    else{canvas.height = window.innerHeight}
 }
 
 function drawCircle(pos,radius,color) {
@@ -33,7 +52,7 @@ function drawCircle(pos,radius,color) {
 
 class Player {
 
-    constructor(pos,radius,color, vel, speed, maxVel){
+    constructor(pos,radius,color, vel, speed, maxVel, mass){
         this.pos = pos
         this.xr = pos.x/canvas.width
         this.yr = pos.y/canvas.height
@@ -42,6 +61,7 @@ class Player {
         this.vel = vel
         this.speed = speed
         this.maxVel = maxVel
+        this.mass = mass
     }
 
     drawPlayer(pos) {
@@ -72,36 +92,50 @@ class Player {
         }
 
     }
-    detectColission(){
+    detectWallCollision(type){
         //detecting collision with wall and moving the player to the opposite wall in case
-        
-        if(this.pos.x<0){
-            drawCircle(this.pos,this.radius+1,"white")
-            this.pos.x = this.pos.x + canvas.width
+        if(type==1){
+            if(this.pos.x-this.radius<0){
+                this.pos.x = this.pos.x%canvas.width + canvas.width
+            }
+            else if(this.pos.x+this.radius>canvas.width){
+                this.pos.x = this.pos.x%canvas.width - canvas.width
+            }
+            if(this.pos.y-this.radius<0){
+                this.pos.y = this.pos.y%canvas.height + canvas.height
+            }
+            else if(this.pos.y+this.radius>canvas.height){
+                this.pos.y = this.pos.y%canvas.height - canvas.height
+            }
         }
-        else if(this.pos.x>canvas.width){
-            drawCircle(this.pos,this.radius+1,"white")
-            this.pos.x = this.pos.x - canvas.width
+        //collision
+        else if(type ==2){
+            if(this.pos.x-this.radius<0){
+                this.pos.x = this.radius
+                this.vel = {x:-this.vel.x,y:this.vel.y}
+            }
+            else if(this.pos.x+this.radius>canvas.width){
+                this.pos.x = canvas.width-this.radius
+                this.vel = {x:-this.vel.x,y:this.vel.y}
+            }
+            if(this.pos.y-this.radius<0){
+                this.pos.y = this.radius
+                this.vel = {y:-this.vel.y,x:this.vel.x}
+            }
+            else if(this.pos.y+this.radius>canvas.height){
+                this.pos.y = canvas.height-this.radius
+                this.vel = {y:-this.vel.y,x:this.vel.x}
+            }
         }
-        if(this.pos.y<0){
-            drawCircle(this.pos,this.radius+1,"white")
-            this.pos.y = this.pos.y + canvas.height
-        }
-        else if(this.pos.y>canvas.height){
-            drawCircle(this.pos,this.radius+1,"white")
-            this.pos.y = this.pos.y - canvas.height
-        }
-        
     }
+    
     updatePos(){
-        drawCircle(this.pos,this.radius+1,"white")
-        this.detectColission()
+        //drawCircle(this.pos,this.radius+1,"white")
         this.pos = {x: this.pos.x +this.vel.x, y:this.pos.y -this.vel.y }
         this.xr = this.pos.x/canvas.width
         this.yr = this.pos.y/canvas.height
         this.applyFriction()
         this.drawPlayer(this.pos)
-        //console.log(this.pos)
     }
 }
 
@@ -143,19 +177,22 @@ class PlayerController{
         self.touch = false
     }
     followMouse(){
-        
         if(self.lMB==true || self.touch==true){
             //chcemy żeby nasze wektory sumowały się do speed w kierunku wskaźnika
             const dx = this.player.pos.x - self.cursorPos.x
             const dy = this.player.pos.y - self.cursorPos.y
-            const c = Math.sqrt(dx*dx + dy*dy)
-            const a = this.player.speed/c
-            const newX =a*dx
-            const newY =a*dy
-            
-            this.player.vel = {x: this.player.vel.x - newX,y: this.player.vel.y + newY}
-            if(Math.hypot(this.player.vel.x,this.player.vel.y)>this.player.maxVel){
-                this.player.vel = {x: this.player.vel.x + newX,y: this.player.vel.y - newY}
+            var c = Math.sqrt(dx*dx + dy*dy)
+            if(c!=0){
+                const a = this.player.speed/c
+                const newX =a*dx
+                const newY =a*dy
+                //c= c*c
+                //added over distance between them squared
+                //nvmd it slowed things too much
+                this.player.vel = {x: this.player.vel.x - newX,y: this.player.vel.y + newY}
+                if(Math.hypot(this.player.vel.x,this.player.vel.y)>this.player.maxVel){
+                    this.player.vel = {x: this.player.vel.x + newX,y: this.player.vel.y - newY}
+                }
             }
         }
     }
@@ -181,30 +218,40 @@ class PlayerController{
 
 fitCanvasToWindow()
 //create player pbject that interacts with onresize
-const friction = 0 //force vector in the opposite direction
-const speed = 2 //can get x pixels per frame faster
-const maxVel = 25
+var friction = 0.2 //force vector in the opposite direction
+var speed = 2 //can get x pixels per frame faster
+var maxVel = Infinity
+const defMas = 1
 var startingPosVertex = new Vertex(innerWidth/2, innerHeight/2)
-const currentPlayer0 = new Player(startingPosVertex, 30, "blue", {x:0,y:0}, speed, maxVel)
-const currentPlayer1 = new Player({x:innerWidth/2+300, y:innerHeight/2}, 30, "red", {x:10,y:10}, speed, maxVel)
-const currentController0 = new PlayerController(currentPlayer0);
-const currentController1 = new PlayerController(currentPlayer1);
+const currentPlayer0 = new Player(startingPosVertex, 30, "blue", {x:0,y:0}, speed, maxVel, defMas)
+var currentController0 = new PlayerController(currentPlayer0);
+
 window.addEventListener("resize", onResize, false)
 currentController0.player.drawPlayer(currentController0.player.pos)
-currentController1.player.drawPlayer(currentController1.player.pos)
-
 
 
 function animate(){
     requestAnimationFrame(animate)
-
-    currentController0.player.updatePos()
-    currentController1.player.updatePos()
-    currentController0.player.detectColission()
-    currentController1.player.detectColission()
+    refreshCanvas()
+    currentController0.player.updatePos() //and draw player
+    friction = frictionSlider.value
+    currentController0.player.speed = accelSlider.value
+    if(speedSlider.value == 50){
+        currentController0.player.maxVel = Infinity
+    }
+    else{
+        currentController0.player.maxVel = speedSlider.value
+    }
+    console.log(currentController0.player.maxVel)
+    
+    if(walls.checked==true){
+        currentController0.player.detectWallCollision(2)
+    }
+    else{
+        currentController0.player.detectWallCollision(1)
+    }
     currentController0.followMouse()
-    currentController0.followPlayer(currentController1.player)
-    currentController1.followPlayer(currentController0.player)
+
 }
 
 animate()

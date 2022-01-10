@@ -145,15 +145,16 @@ class PlayerController{
         this.self = this
         this.player = player
         this.lMB = false
-        this.touch = false
+        this.tht = false
         this.cursorPos = {x: innerWidth/2, y: innerHeight/2}
 
         window.addEventListener("mousedown", this.mouseDownHandler, false)
         window.addEventListener("mouseup", this.mouseUpHandler, false)
         window.addEventListener("mousemove", this.getCursorPosition, false)
-        window.addEventListener("touchstart", this.getCursorPosition, false)
-        window.addEventListener("touchend", this.touchDownHandler, false)
-        window.addEventListener("touchmove", this.touchUpHandler, false)
+        window.addEventListener("touchstart", this.touchDownHandler, false)
+        window.addEventListener("touchend", this.touchUpHandler, false)
+        window.addEventListener("touchmove", this.getCursorPosition, false)
+        
     }
 
     getCursorPosition(e) {
@@ -162,7 +163,10 @@ class PlayerController{
         const y = e.clientY - rect.top
         self.cursorPos = {x:x,y:y}
     }
-    
+    getTouchPosition(e) {
+        const touchPoint = e.targetTouches.item(0)
+        self.cursorPos = {x:touchPoint.clientX,y:touchPoint.clientY}
+    }
     mouseDownHandler(){
         //nie mam pojęcia czemu to działa nagle pomocy
         self.lMB = true
@@ -171,13 +175,13 @@ class PlayerController{
         self.lMB = false
     }
     touchDownHandler(){
-        self.touch = true
+        self.tht = true
     }
     touchUpHandler(){
-        self.touch = false
+        self.tht = false
     }
     followMouse(){
-        if(self.lMB==true || self.touch==true){
+        if(self.lMB==true || self.tht==true){
             //chcemy żeby nasze wektory sumowały się do speed w kierunku wskaźnika
             const dx = this.player.pos.x - self.cursorPos.x
             const dy = this.player.pos.y - self.cursorPos.y
@@ -242,7 +246,6 @@ function animate(){
     else{
         currentController0.player.maxVel = speedSlider.value
     }
-    console.log(currentController0.player.maxVel)
     
     if(walls.checked==true){
         currentController0.player.detectWallCollision(2)

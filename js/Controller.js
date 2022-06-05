@@ -1,21 +1,29 @@
 export class PlayerController{
-    
-    constructor(player){
+
+    constructor(player,pointerFollow){
         this.self = this
         this.player = player
         this.lMB = false
         this.cursorPos = {x: innerWidth/2, y: innerHeight/2}
+        this.followPointer = pointerFollow;
     }
-    addControll(player) {
-        this.player = player;
+    addControll() {
         canvas.addEventListener("pointerdown", this.pointerDownHandle, false);
         canvas.addEventListener("pointerup", this.pointerUpHandle, false)
         canvas.addEventListener("pointermove", this.pointerMoveHandle, false)
+        canvas.addEventListener("pointerleave", this.pointerLeaveHandle, false)
+    }
+    addPlayerControll(player){
+        this.player = player;
     }
     removeControll() {
         canvas.removeEventListener("pointerdown",this.pointerDownHandle,false);
         canvas.removeEventListener("pointerup", this.pointerUpHandle, false)
         canvas.removeEventListener("pointermove", this.pointerMoveHandle, false)
+        canvas.removeEventListener("pointerleave", this.pointerLeaveHandle, false)
+    }
+    pointerLeaveHandle(e) {
+        self.lMB = false
     }
     pointerMoveHandle(e) {
         self.cursorPos = {x:e.offsetX,y:e.offsetY}
@@ -50,28 +58,28 @@ export class PlayerController{
     }
     followPlayer(player1){
         
-            //chcemy żeby nasze wektory sumowały się do speed w kierunku wskaźnika
-            const dx = this.player.pos.x - player1.pos.x
-            const dy = this.player.pos.y - player1.pos.y
-            const c = Math.sqrt(dx*dx + dy*dy)
-            var a =0;
-            if(c!=0){
-                a = this.player.speed/c
-            }
-            
-            const newX =a*dx
-            const newY =a*dy
-            
-            this.player.vel = {x: this.player.vel.x - newX,y: this.player.vel.y + newY}
-            //subtract new added speed if it went over max speed
-            if(Math.hypot(this.player.vel.x,this.player.vel.y)>this.player.maxVel){
-                this.player.vel = {x: this.player.vel.x + newX,y: this.player.vel.y - newY}
-            }
+        //chcemy żeby nasze wektory sumowały się do speed w kierunku wskaźnika
+        const dx = this.player.pos.x - player1.pos.x
+        const dy = this.player.pos.y - player1.pos.y
+        const c = Math.sqrt(dx*dx + dy*dy)
+        var a =0;
+        if(c!=0){
+            a = this.player.speed/c
+        }
+        
+        const newX =a*dx
+        const newY =a*dy
+        
+        this.player.vel = {x: this.player.vel.x - newX,y: this.player.vel.y + newY}
+        //subtract new added speed if it went over max speed
+        if(Math.hypot(this.player.vel.x,this.player.vel.y)>this.player.maxVel){
+            this.player.vel = {x: this.player.vel.x + newX,y: this.player.vel.y - newY}
+        }
         
     }
-    applyFriction(friction){
-        const dx = this.player.vel.x
-        const dy = this.player.vel.y
+    applyFriction(dt, friction){
+        const dx = dt*this.player.vel.x
+        const dy = dt*this.player.vel.y
         const c = dx*dx + dy*dy
         if(friction*friction>c){
             this.player.vel = {x:0,y:0}
@@ -137,17 +145,18 @@ export class PlayerController{
             }
         }
     }
-    applyPhysicsStep(collisionType,friction){
+    applyPhysicsStep(dt, collisionType, friction){
+        if(this.followPointer){this.followMouse(self.cursorPos)}
+        this.applyFriction(dt, friction)
         //apply delta position due to velocity
-        this.player.pos = {x: this.player.pos.x +this.player.vel.x, y:this.player.pos.y -this.player.vel.y }
-        
-        this.applyFriction(friction)
-        this.player.preCollsionPos = structuredClone(this.player.pos);
+        this.player.pos = {x: this.player.pos.x +dt*this.player.vel.x, y:this.player.pos.y -dt*this.player.vel.y }
+    
+        this.player.preWallCollsionPos = structuredClone(this.player.pos);
         this.detectWallCollision(collisionType)
     }
     
-    updatePlayerPos(collisionType,friction){
-        this.applyPhysicsStep(collisionType,friction)
+    updatePlayerPos(dt){
+        this.applyPhysicsStep(dt, this.player.collisionType, this.player.friction)
         
         this.player.drawPlayer(this.player.pos)
         

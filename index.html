@@ -3,27 +3,32 @@
 
 <head>
     <style>
-    html {
+    html, body, canvas {
         overflow: hidden;
+        touch-action: none;
+    }
+    body {
+        margin:0;
+        background-color:"white";
     }
     .UIElement {
-        padding-left: 100px;
-        padding-right: 100px;
-        width:min-content;
         display: grid;
         text-align: center;
         grid-template-rows: auto, auto;
         align-content:center;
+        align-items:center;
+        justify-content: center;
     }
     .UIText {
         white-space: nowrap;
         word-wrap: break-word;
         text-align: center;
         font-size: 20px;
+        
     }
     .UIBar {
         display: grid;
-        grid-template-columns: auto auto auto auto auto;
+        grid-template-columns: repeat(5, 1fr);
         height: 100;
         align-content: center;
         justify-content: center;
@@ -33,9 +38,6 @@
         top: 34px
     }
 
-    .range {
-        width:200px;
-    }
 
     .switch {
     position: relative;
@@ -104,13 +106,6 @@
 </head>
 
 <body>
-    <style>
-        body {
-            margin:0;
-            background-color:"white";
-        }
-    </style>
-
     <div class="gamespace">
         <div class="UIBar" id="UIBar" state="open" style="height: 100px; width: auto">
 
@@ -154,10 +149,14 @@
             </div>
         </div>
         <canvas id="canvas">
-            <script type="module" src="./js/index.js"></script>
+            
         </canvas>
     </div>
-    
+    <script type="module" src="./js/Controller.js" async="true"></script>
+    <script type="module" src="./js/Player.js" async="true"></script>
+    <script type="module" src="./js/TimeManager.js" async="true"></script>
+    <script type="module" src="./js/GUI.js" async="true"></script>
+    <script type="module" src="./js/index.js" async="true"></script>
 </body>
 
 </html>

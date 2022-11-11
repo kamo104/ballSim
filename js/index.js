@@ -2,11 +2,15 @@ import { TimeManager } from "./TimeManager.js";
 import { Player } from "./Player.js"
 import { PlayerController } from "./Controller.js";
 import { GUIManager } from "./GUI.js";
+import { variables } from "./variables.js";
 
-const canvas = document.querySelector('canvas');
-const ctx = canvas.getContext('2d')
 
-const ui = document.getElementById("UIBar")
+// var canvas = document.querySelector('canvas');
+var canvas = variables.canvas;
+
+var ctx = variables.ctx;
+
+var ui = variables.ui
 
 function refreshCanvas(){
     ctx.fillStyle = "black"
@@ -36,25 +40,34 @@ var maxVel = Infinity;
 var collisionType =1;
 var defMas = 1;
 
-const currentPlayer = new Player(ctx, {x:innerWidth/2,y:innerHeight/2}, 30, "blue", {x:0,y:0}, speed, maxVel, defMas, friction, collisionType)
+const currentPlayer = new Player(ctx, {x:canvas.width/2,y:canvas.height/2}, 30, "blue", {x:0,y:0}, speed, maxVel, defMas, friction, collisionType)
 var currentController = new PlayerController(currentPlayer,true);
 currentController.addControll();
 //currentController0.removeControll();
 
-const controllerArr = [];
-controllerArr.push(currentController);
+variables.controllerArr.push(currentController);
 
 
 const guiManager = new GUIManager(currentController);
 guiManager.attachControll();
+
+// guiManager.addEventListener("onColorPickerClose",()=>{})
 
 const timeManager = new TimeManager();
 
 function animate(){
     const timeManagerResult = timeManager.timeDelta();
     refreshCanvas()
-    currentController.updatePlayerPos(timeManagerResult.dt)
-    console.log("fps:", timeManagerResult.fps)
+    for(var i=0;i<variables.controllerArr.length;i++){
+        for(var j=0;j<variables.controllerArr.length;j++){
+            if(i==j) continue;
+            
+            variables.controllerArr[i].followPlayer(variables.controllerArr[j].player);
+            
+        }
+        variables.controllerArr[i].updatePlayerPos(timeManagerResult.dt);
+    }
+    //console.log("fps:", timeManagerResult.fps)
     requestAnimationFrame(animate)
     
 }

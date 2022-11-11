@@ -20,6 +20,7 @@
         justify-content: center;
     }
     .UIText {
+        color:white;
         white-space: nowrap;
         word-wrap: break-word;
         text-align: center;
@@ -27,8 +28,9 @@
         
     }
     .UIBar {
+        background-color: #121212;
         display: grid;
-        grid-template-columns: repeat(5, 1fr);
+        grid-template-columns: repeat(6, 1fr);
         height: 100;
         align-content: center;
         justify-content: center;
@@ -101,6 +103,19 @@
     .slider.round:before {
     border-radius: 50%;
     }
+    
+    input[type=range]::-webkit-slider-runnable-track {
+    position:relative;
+    width: 300px;
+    height: 17px;
+    background: #3b3b3b;
+    border: none;
+    border-radius: 3px;
+    }
+
+    #ballAdd{
+        width: 30px;
+    }
     </style>
     
 </head>
@@ -141,11 +156,20 @@
                 </label>
                 <input class="range" type="range" min="0" max="10" value="2" step="1" id="acceleration">
             </div>
+            <div class="UIElement" id="ballColor">
+                <label class="UItext">
+                    ball color:
+                </label>
+                <input type="color" id="colorPicker">
+            </div>
             <div class="UIElement" id="addBall">
                 <label class="UItext">
                     Add a ball:
                 </label>
-                <input type="color" id="colorPicker">
+                <div class="UIElement">
+                    <input type="button" id="ballAdd">
+                </div>
+                
             </div>
         </div>
         <canvas id="canvas">

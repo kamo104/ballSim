@@ -1,6 +1,9 @@
 import { PlayerController } from "./Controller.js";
 import { Player } from "./Player.js";
 import { variables } from "./variables.js";
+import * as GMath from "./Math.js"
+
+
 
 export class GUIManager{
     currentController;
@@ -15,8 +18,8 @@ export class GUIManager{
     
 
     constructor(controller){
-        this.self = this;
-        this.currentController =controller;
+        self = this;
+        this.currentController = controller;
         self.currentController = controller;
 
         this.ui = document.getElementById("UIBar")
@@ -29,9 +32,11 @@ export class GUIManager{
 
         this.accelSlider = document.getElementById("acceleration")
 
-        this.ballAdd = document.getElementById("ballAdd");
+        this.ballAdding = document.getElementById("ballAdding");
         
         this.colorPicker = document.getElementById("colorPicker");
+        
+        this.animationRocker = document.getElementById("animationPause")
     }
     attachController(controller){
         self.currentController = controller;
@@ -45,9 +50,13 @@ export class GUIManager{
         
         this.speedSlider.addEventListener("change",this.speedSliderChange,false);
 
-        this.ballAdd.addEventListener("click",this.ballAddClick,false);
+        this.ballAdding.addEventListener("click",this.ballAddingClick,false);
         
-        variables.canvas.addEventListener("click",this.createNewPlayer,false);
+        variables.canvas.addEventListener("click",this.canvasClick,false);
+
+        this.colorPicker.addEventListener("change",this.colorPick,false);
+
+        this.animationRocker.addEventListener("change",this.animationPause,false);
     }
     removeControll(){
         this.walls.removeEventListener("change",this.wallsChange,false);
@@ -58,20 +67,40 @@ export class GUIManager{
         
         this.speedSlider.removeEventListener("change",this.speedSliderChange,false);
 
-        this.ballAdd.removeEventListener("click",this.ballAddClick,false);
+        this.ballAdding.removeEventListener("click",this.ballAddingClick,false);
 
-        variables.canvas.removeEventListener("click",this.createNewPlayer,false);
+        variables.canvas.removeEventListener("click",this.canvasClick,false);
+
+        this.colorPicker.removeEventListener("change",this.colorPick,false);
+
+        this.animationRocker.removeEventListener("change",this.animationPause,false);
+    }
+
+    animationPause(e){
+        switch(e.target.checked){
+            case(false):{
+                variables.doAnimationStep = 0;
+                break;
+            }
+            case(true):{
+                variables.doAnimationStep = 1;
+                break;
+            }
+        }
+    }
+    colorPick(e){
+        self.currentController.player.color = e.target.value
     }
 
     wallsChange(e){
         switch(e.target.checked){
             case(false):{
-                self.currentController.player.collisionType =1;
+                // self.currentController.player.collisionType =1;
                 variables.collisionType=1;
                 break;
             }
             case(true):{
-                self.currentController.player.collisionType =2;
+                // self.currentController.player.collisionType =2;
                 variables.collisionType=2;
                 break;
             }
@@ -86,7 +115,7 @@ export class GUIManager{
         variables.friction = e.target.value;
     }
     speedSliderChange(e){
-        if(e.target.value == 50){
+        if(e.target.value == e.target.max){
             self.currentController.player.maxVel = Infinity
             variables.maxVel = Infinity;
         }
@@ -95,28 +124,65 @@ export class GUIManager{
             variables.maxVel = e.target.value;
         }
     }
-    ballAddClick(e){
-        variables.nextClickAddBall = 1;
+    ballAddingClick(e){
+        switch(variables.nextClickAddBall){
+            case(0):{
+                variables.nextClickAddBall = 1;
+                break;
+            }
+            case(1):{
+                variables.nextClickAddBall = 0;
+                break;
+            }
+        }
+        
 
     }
-    createNewPlayer(e){
-        if(variables.nextClickAddBall===0) return;
-        variables.nextClickAddBall =0;
-        const newPlayer = new Player(
-            variables.ctx, 
-            {x:e.offsetX,y:e.offsetY}, 
-            30, 
-            self.colorPicker.value, 
-            {x:0,y:0}, 
-            variables.speed, 
-            variables.maxVel, 
-            variables.defMas, 
-            variables.friction, 
-            variables.collisionType
-        );
-        const newController = new PlayerController(newPlayer,true);
-        self.currentController = newController;
-        variables.controllerArr.push(newController);
+    updateGUI(){
+        self.colorPicker.value = self.currentController.player.color;
+        // self.walls.checked = self.currentController.player.collisionType-1;
+        self.accelSlider.value = self.currentController.player.speed;
+        self.frictionSlider.value = self.currentController.player.friction;
+        self.speedSlider.value = self.currentController.player.maxVel;
+    }
+
+    canvasClick(e){
+        if(variables.nextClickAddBall===0){
+            // switch controlls to a ball that has been chosen
+            const clickPos = {x:e.offsetX,y:e.offsetY};
+            var minDistance = Infinity;
+            var closest = 0//index of a player that's the closest to the click
+            for(var i=0;i<variables.controllerArr.length;i++){
+                const dist = GMath.distance(variables.controllerArr[i].player.pos,clickPos)
+                if(dist < minDistance){
+                    minDistance = dist;
+                    closest = i;
+                }
+            }
+            self.currentController = variables.controllerArr[closest];
+            self.updateGUI();
+        }
+        else{
+            // variables.nextClickAddBall =0;
+            const newPlayer = new Player(
+                variables.ctx, 
+                {x:e.offsetX,y:e.offsetY}, 
+                variables.defRadius, 
+                self.colorPicker.value, 
+                {x:0,y:0}, 
+                variables.speed, 
+                variables.maxVel, 
+                variables.defMass, 
+                variables.friction,
+            );
+            const newController = new PlayerController(newPlayer,true);
+            self.currentController = newController;
+            variables.controllerArr.push(newController);
+        }
+
+    }
+    pauseGame(e){
+        variables.doAnimationStep = !variables.doAnimationStep;
     }
     
     

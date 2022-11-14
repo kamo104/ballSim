@@ -1,3 +1,6 @@
+import { variables } from "./variables.js"
+import { distance } from "./Math.js"
+
 export class PlayerController{
 
     constructor(player,pointerFollow){
@@ -36,60 +39,94 @@ export class PlayerController{
         self.cursorPos = {x:e.offsetX,y:e.offsetY}
         self.lMB = true
     }
-    followMouse(){
+    FollowPointer(){
+        self.followPointer = 1;
+    }
+    DoNotFollowPointer(){
+        self.followPointer = 0;
+    }
+    accelerateToPoint(point,targetMass,dt){
+        const dx = point.x - this.player.pos.x 
+        const dy = point.y - this.player.pos.y
+        // distance from one point to another
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        const distSq = dist*dist
+        // our acceleration
+        // F = G*m1*m2/R^2 , F = m1*a => a = G*m2/R^2
+
+        const accel = targetMass*variables.G*dt/distSq // distSq
+        // console.log(accel,targetMass,variables.G,dt,distSq)
+        // const accel = targetMass*dt;
+        const accelSq = accel*accel;
+        // the a coefficient of the straight passing through the both points 
+        var a = 0;
+
+        // new velocity values
+        var newX=0;
+        var newY=0;
+
+        if(dx===0&&dy===0)return;
+        else if(dx===0&&dy!==0){
+            a=Infinity;
+            newY = accel;
+        }
+        else if(dy===0&&dx!==0){
+            a=0;
+            newX = accel
+        }
+        else{
+            // y = ax + b
+            // a = dy/dx
+            // create a velocity vector with length of character.speed coefficient a and from player.pos to point
+            // (newX,newY) 2. newX*newX+newY*newY=speed^2, 1. newY/newX = a, 3. newY>0 if pos.y-point.y>0 else newY<0, 4. newX>0 if pos.x-point.x>0 else newX<0
+            // 1. newY = a*newX, 
+            // 2. newX*newX + (a*newX)*(a*newX) = speed^2 => |newX| = sqrt(speed^2/(1+a^2))
+            
+            a=dy/dx
+            const absNewX = Math.sqrt(accelSq/(1+a*a)); 
+            dx > 0 ? newX = absNewX : newX = -absNewX;
+            newY = a*newX;
+
+        }
+        //debug
+        // add the new velocities
+
+        this.player.vel = {x: this.player.vel.x + newX,y: this.player.vel.y + newY};
+    }
+    followMouse(cursorPos,dt){
         if(self.lMB==true){
-            //chcemy żeby nasze wektory sumowały się do speed w kierunku wskaźnika
-            const dx = this.player.pos.x - self.cursorPos.x
-            const dy = this.player.pos.y - self.cursorPos.y
-            var c = Math.sqrt(dx*dx + dy*dy)
-            if(c!=0){
-                const a = this.player.speed/c
-                const newX =a*dx
-                const newY =a*dy
-                //c= c*c
-                //added over distance between them squared
-                //nvmd it slowed things too much
-                this.player.vel = {x: this.player.vel.x - newX,y: this.player.vel.y + newY}
-                if(Math.hypot(this.player.vel.x,this.player.vel.y)>this.player.maxVel){
-                    this.player.vel = {x: this.player.vel.x + newX,y: this.player.vel.y - newY}
-                }
-            }
+            this.accelerateToPoint(cursorPos,variables.cursorMass,dt);
         }
     }
-    followPlayer(player1){
-        
-        //chcemy żeby nasze wektory sumowały się do speed w kierunku wskaźnika
-        const dx = this.player.pos.x - player1.pos.x
-        const dy = this.player.pos.y - player1.pos.y
-        const c = Math.sqrt(dx*dx + dy*dy)
-        var a =0;
-        if(c!=0){
-            a = this.player.speed/c
-        }
-        
-        const newX =a*dx
-        const newY =a*dy
-        
-        this.player.vel = {x: this.player.vel.x - newX,y: this.player.vel.y + newY}
-        //subtract new added speed if it went over max speed
-        if(Math.hypot(this.player.vel.x,this.player.vel.y)>this.player.maxVel){
-            this.player.vel = {x: this.player.vel.x + newX,y: this.player.vel.y - newY}
-        }
+    followPlayer(player1,dt){
+        this.accelerateToPoint(player1.pos,player1.mass,dt);
         
     }
     applyFriction(dt, friction){
-        const dx = dt*this.player.vel.x
-        const dy = dt*this.player.vel.y
-        const c = dx*dx + dy*dy
-        if(friction*friction>c){
-            this.player.vel = {x:0,y:0}
+        const dx = this.player.vel.x
+        const dy = this.player.vel.y
+        const hypotSquared = dx*dx + dy*dy;
+        const hypot = Math.sqrt(hypotSquared);
+        const resultingHypot = hypot-friction*dt;
+        const ratio = resultingHypot/hypot;
+
+        if(hypot===0) return;
+        if(ratio<=0){
+            this.player.vel = {x:0,y:0};
+            return;
         }
-        else if(dx!=0  || dy !=0){
-            const a = friction/Math.sqrt(c)
-            const fx = dx*a
-            const fy = dy*a
-            this.player.vel = {x:this.player.vel.x - fx,y:this.player.vel.y -fy}
+        else{
+            
+            this.player.vel = {x:this.player.vel.x*ratio,y:this.player.vel.y*ratio};
+
         }
+        
+        // else if((dx!==0  || dy !==0) && cSquared!==0){
+        //     const a = friction/c;
+        //     const fx = dx*a;
+        //     const fy = dy*a;
+        //     this.player.vel = {x:this.player.vel.x - fx,y:this.player.vel.y -fy};
+        // }
 
     }
     detectWallCollision(type){
@@ -108,8 +145,6 @@ export class PlayerController{
                     this.player.superPosition = true;
                     this.player.pos.x = this.player.pos.x%canvas.width - canvas.width
                 }
-    
-    
                 if(this.player.pos.y-this.player.radius<0){
                     this.player.superPosition = true;
                     this.player.pos.y = this.player.pos.y%canvas.height + canvas.height
@@ -145,20 +180,88 @@ export class PlayerController{
             }
         }
     }
+    capToMaxSpeed(){
+        // check if we can go that fast and scale down the vel vector if not
+        const velocityHypot = Math.hypot(this.player.vel.x,this.player.vel.y);
+        const ratio=velocityHypot/this.player.maxVel;
+
+        if(ratio>1){
+            this.player.vel.y /= ratio;
+            this.player.vel.x /= ratio;
+        }
+    }
     applyPhysicsStep(dt, collisionType, friction){
-        if(this.followPointer){this.followMouse(self.cursorPos)}
-        this.applyFriction(dt, friction)
+        if(this.followPointer){this.followMouse(self.cursorPos,dt)}
+        
+
+
+        this.capToMaxSpeed();
+
+        this.applyFriction(dt, friction);
+
+
         //apply delta position due to velocity
-        this.player.pos = {x: this.player.pos.x +dt*this.player.vel.x, y:this.player.pos.y -dt*this.player.vel.y }
-    
+        const newPos = {x: this.player.pos.x + dt*this.player.vel.x, y:this.player.pos.y + dt*this.player.vel.y };
+
+        var toDelete=[];
+        // Array(variables.controllerArr)
+        for(var i=0;i<variables.controllerArr.length;i++){
+            if(variables.controllerArr[i]==this) {
+                continue;
+            }
+
+            const p2 = variables.controllerArr[i].player;
+            const dist = distance(newPos,p2.pos);
+            
+            if(dist<=p2.radius+this.player.radius){
+                // console.log(dist,p2.radius+this.player.radius)
+                // MERGE
+                toDelete.push(variables.controllerArr[i]);
+                // (vel1*m1 + vel2*m2)/(m1+m2) = newVel; for x and y respectively
+                const newRadius = Math.pow(Math.pow(this.player.radius,3)+Math.pow(p2.radius,3),1/3);
+                const newMass = this.player.mass+p2.mass;
+                const newVel = {
+                    x:(this.player.vel.x*this.player.mass+p2.vel.x*p2.mass)/newMass,
+                    y:(this.player.vel.y*this.player.mass+p2.vel.y*p2.mass)/newMass
+                }
+                this.player.vel = newVel;
+                this.player.mass = newMass;
+                this.player.radius = newRadius;
+            }
+        }
+        // console.log(toDelete)
+        var newArr = [];
+        var doNotAdd = false;
+        for(var i=0;i<variables.controllerArr.length;i++){
+            doNotAdd=false;
+            for(var j=0;j<toDelete.length;j++){
+                if(toDelete[j]==variables.controllerArr[i]){
+                    doNotAdd =true;
+                }
+            }
+            if(doNotAdd)continue;
+            else newArr.push(variables.controllerArr[i]);
+        }
+        variables.controllerArr = newArr;
+        // variables.controllerArr = variables.controllerArr.filter((val,index)=>{
+        //     if (index in toDelete) return false;
+        //     else return true;
+        // });
+        
+
+
+
+        this.player.pos = newPos
+
+
         this.player.preWallCollsionPos = structuredClone(this.player.pos);
         this.detectWallCollision(collisionType)
     }
     
     updatePlayerPos(dt){
-        this.applyPhysicsStep(dt, this.player.collisionType, this.player.friction)
+        this.applyPhysicsStep(dt, variables.collisionType, this.player.friction)
         
-        this.player.drawPlayer(this.player.pos)
+        // this.player.drawPlayer(this.player.pos)
         
     }
 }

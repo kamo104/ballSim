@@ -33,14 +33,25 @@ function fitCanvasToWindow(){
 
 fitCanvasToWindow()
 window.addEventListener("resize", onResize, false)
-//create player pbject that interacts with onresize
-var friction = 0.2; //force vector in the opposite direction
-var speed = 2; //can get x pixels per dt faster
-var maxVel = Infinity;
-var collisionType =1;
-var defMas = 1;
 
-const currentPlayer = new Player(ctx, {x:canvas.width/2,y:canvas.height/2}, 30, "blue", {x:0,y:0}, speed, maxVel, defMas, friction, collisionType)
+const currentPlayer = new Player(
+    ctx, 
+    {
+        x:canvas.width/2,
+        y:canvas.height/2
+    }, 
+    variables.defRadius, 
+    "#0000FF", 
+    {
+        x:0,
+        y:0
+    }, 
+    variables.speed, 
+    variables.maxVel, 
+    variables.defMass, 
+    variables.friction, 
+    )
+
 var currentController = new PlayerController(currentPlayer,true);
 currentController.addControll();
 //currentController0.removeControll();
@@ -51,22 +62,34 @@ variables.controllerArr.push(currentController);
 const guiManager = new GUIManager(currentController);
 guiManager.attachControll();
 
-// guiManager.addEventListener("onColorPickerClose",()=>{})
 
 const timeManager = new TimeManager();
 
-function animate(){
-    const timeManagerResult = timeManager.timeDelta();
-    refreshCanvas()
+const drawPlayers = ()=>{
+    variables.controllerArr.forEach((controller)=>{
+        controller.player.drawPlayer(controller.player.pos);
+    })
+}
+
+const frameLogic = (timeManagerResult)=>{
     for(var i=0;i<variables.controllerArr.length;i++){
         for(var j=0;j<variables.controllerArr.length;j++){
             if(i==j) continue;
-            
-            variables.controllerArr[i].followPlayer(variables.controllerArr[j].player);
-            
+            variables.controllerArr[i].followPlayer(variables.controllerArr[j].player,timeManagerResult.dt);   
         }
         variables.controllerArr[i].updatePlayerPos(timeManagerResult.dt);
     }
+    
+}
+
+function animate(){
+    const timeManagerResult = timeManager.timeDelta();
+    refreshCanvas();
+
+    if(variables.doAnimationStep) frameLogic(timeManagerResult);
+
+    drawPlayers();
+
     //console.log("fps:", timeManagerResult.fps)
     requestAnimationFrame(animate)
     

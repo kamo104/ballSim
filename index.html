@@ -30,7 +30,7 @@
     .UIBar {
         background-color: #121212;
         display: grid;
-        grid-template-columns: repeat(6, 1fr);
+        grid-template-columns: repeat(7, 1fr);
         height: 100;
         align-content: center;
         justify-content: center;
@@ -113,9 +113,13 @@
     border-radius: 3px;
     }
 
-    #ballAdd{
-        width: 30px;
+    #colorPicker{
+        border: none;
+        margin: none;
+        padding: 0px 0px 0px 0px;
+
     }
+
     </style>
     
 </head>
@@ -140,36 +144,52 @@
                 <label class="UItext">
                     ballMaxSpeed:
                 </label>
-                <input class="range" type="range" min="0" max="50" value="50" id="ballSpeed">
+                <input class="range" type="range" min="0" max="200" value="25" step="1" id="ballSpeed">
             </div>
 
             <div class="UIElement" id="frictionContainer">
                 <label class="UItext">
                     friction:
                 </label>
-                <input class="range" type="range" min="0" max="3" value="0.2" step="0.05" id="friction">
+                <input class="range" type="range" min="0" max="3" value="0.005" step="0.005" id="friction">
             </div>
 
             <div class="UIElement" id="accelerationContainer">
                 <label class="UItext">
                     acceleration:
                 </label>
-                <input class="range" type="range" min="0" max="10" value="2" step="1" id="acceleration">
+                <input class="range" type="range" min="0" max="2" value="0.2" step="0.01" id="acceleration">
             </div>
             <div class="UIElement" id="ballColor">
                 <label class="UItext">
                     ball color:
                 </label>
-                <input type="color" id="colorPicker">
+                <div class="UIText">
+                    <input type="color" id="colorPicker" value= "#0000FF">
+                </div>
             </div>
+
             <div class="UIElement" id="addBall">
                 <label class="UItext">
-                    Add a ball:
+                    ball adding:
                 </label>
-                <div class="UIElement">
-                    <input type="button" id="ballAdd">
+                <div class="UIText">
+                    <label class="switch">
+                        <input type="checkbox" id="ballAdding">
+                        <span class="slider"></span>
+                    </label>
                 </div>
-                
+            </div>
+            <div class="UIElement">
+                <label class="UItext">
+                    play animation:
+                </label>
+                <div class="UIText">
+                    <label class="switch">
+                        <input type="checkbox" id="animationPause" checked="true">
+                        <span class="slider"></span>
+                    </label>
+                </div>
             </div>
         </div>
         <canvas id="canvas">

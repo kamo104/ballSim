@@ -1,6 +1,6 @@
 export class Player {
 
-    constructor(drawingCtx, pos,radius,color, vel, speed, maxVel, mass, friction, collisionType){
+    constructor(drawingCtx, pos,radius,color, vel, speed, maxVel, mass, friction){
         this.ctx = drawingCtx
 
         this.pos = pos
@@ -14,7 +14,6 @@ export class Player {
         this.mass = mass
         this.superPosition = false;
         this.friction = friction;
-        this.collisionType = collisionType;
     }
 
     drawPlayer(pos) {
